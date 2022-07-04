@@ -21,6 +21,9 @@ set(BUILD_DEV OFF CACHE BOOL "")
 set(BUILD_TOOLKIT OFF CACHE BOOL "")
 set(BUILD_TESTS OFF CACHE BOOL "")
 
+add_subdirectory(extlibs/near-ledger)
+target_link_libraries(${PluginName} ledgercpp)
+
 add_custom_command(
     TARGET ${PluginName} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo
