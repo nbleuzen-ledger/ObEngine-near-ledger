@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(PluginName "SamplePlugin")
+set(PluginName "NearLedgerPlugin")
 
 project(${PluginName})
 
