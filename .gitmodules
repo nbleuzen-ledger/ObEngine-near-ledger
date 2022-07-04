@@ -1,0 +1,4 @@
+[submodule "ObEngine"]
+	path = ObEngine
+	url = git@github.com:ObEngine/ObEngine.git
+	branch = v0.5
