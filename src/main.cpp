@@ -2,10 +2,10 @@
 
 #include <PluginSDK.hpp>
 
-#include <iostream>
 #include <ledgercpp/ledger.hpp>
 
 #include <algorithm>
+#include <iostream>
 #include <string>
 
 std::vector<std::string> split(const std::string& str, const std::string& delimiters)
@@ -83,40 +83,60 @@ std::vector<uint8_t> bip32_path_to_bytes(std::string bip32_path, bool prepend_le
     return bytes;
 }
 
+ledger::Ledger nano;
+
+std::vector<uint8_t> get_version()
+{
+    std::tuple<ledger::Error, std::vector<uint8_t>> ret;
+
+    ret = nano.get_version();
+
+    ledger::Error err = std::get<0>(ret);
+    std::cout << __func__ << ": " << ledger::error_message(err) << std::endl;
+
+    return std::get<1>(ret);
+}
+
+std::vector<uint8_t> get_public_key(std::vector<uint8_t> & account)
+{
+    std::tuple<ledger::Error, std::vector<uint8_t>> ret;
+
+    ret = nano.get_public_key(account);
+
+    ledger::Error err = std::get<0>(ret);
+    std::cout << __func__ << ": " << ledger::error_message(err) << std::endl;
+
+    return std::get<1>(ret);
+}
+
+std::vector<uint8_t> sign(std::vector<uint8_t> & account, std::vector<uint8_t> & serialized_tx)
+{
+    std::tuple<ledger::Error, std::vector<uint8_t>> ret;
+
+    ret = nano.sign(account, serialized_tx, /*p1==P1_LAST*/0x80);
+
+    ledger::Error err = std::get<0>(ret);
+    std::cout << __func__ << ": " << ledger::error_message(err) << std::endl;
+
+    return std::get<1>(ret);
+}
+
 PLUGIN_FUNC void OnInit(obe::engine::Engine& engine)
 {
     const obe::debug::Logger logger = engine.get_logger();
-
-    const std::vector<uint8_t> account = bip32_path_to_bytes("44'/397'/0'/0'/1'");
-    ledger::Ledger nano;
-    std::tuple<ledger::Error, std::vector<uint8_t>> ret;
-
     ledger::Error err = nano.open();
-    std::cout << ledger::error_message(err) << std::endl;
+    if (err != ledger::Error::SUCCESS)
+        logger->error(ledger::error_message(err));
 
-    // ret = nano.get_public_key(account);
-    // std::cout << ledger::error_message(std::get<0>(ret)) << std::endl;
-    // std::cout << "Publick Key: " << std::endl;
-    // for (uint8_t data_byte: std::get<1>(ret))
-    //     std::cout << (int)data_byte << ",";
-    // std::cout << std::endl;
+    sol::state_view state = engine.get_lua_state();
+    auto ledger_namespace = state["ledger"].get_or_create<sol::table>();
+    ledger_namespace.set_function("bip32_path_to_bytes", &bip32_path_to_bytes);
+    ledger_namespace.set_function("get_version", &get_version);
+    ledger_namespace.set_function("get_public_key", &get_public_key);
+    ledger_namespace.set_function("sign", &sign);
+}
 
-    ret = nano.get_version(account);
-    logger->info(ledger::error_message(std::get<0>(ret)));
-    logger->info("Version: ");
-    for (uint8_t data_byte: std::get<1>(ret))
-        std::cout << (int)data_byte << ".";
-    std::cout << std::endl;
-
-    const std::vector<uint8_t> signable_tx = {
-        20,0,0,0,108,101,100,103,101,114,103,97,109,101,115,50,46,116,101,115,116,110,101,116,0,191,217,62,20,113,68,168,64,193,148,49,64,151,0,208,244,69,221,23,94,60,139,209,167,237,247,57,103,18,235,172,11,199,208,85,142,133,85,0,0,9,0,0,0,116,101,115,116,46,110,101,97,114,43,38,82,152,20,83,70,135,150,46,91,191,61,18,60,128,77,231,72,20,150,248,160,195,84,158,101,170,11,109,22,72,1,0,0,0,3,0,0,0,161,237,204,206,27,194,211,0,0,0,0,0,0
-    };
-    ret = nano.sign(account, signable_tx, /*p1==P1_LAST*/0x80);
-    logger->info(ledger::error_message(std::get<0>(ret)));
-    logger->info("Signature: ");
-    for (uint8_t data_byte: std::get<1>(ret))
-        std::cout << (int)data_byte << ",";
-    std::cout << std::endl;
-
+PLUGIN_FUNC void OnExit(obe::engine::Engine& engine)
+{
     nano.close();
 }
