@@ -8,6 +8,11 @@ jobs:
   release_linux:
     runs-on: ubuntu-latest
     steps:
+    - name: Install extra-dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libusb-1.0-0-dev libhidapi-dev
+      shell: bash
     - name: Compile ÖbEngine plugin
       id: compile_plugin
       uses: ObEngine/BuildPluginAction@v3

@@ -1,5 +1,11 @@
 # ObEngine NEAR Ledger Plugin
 
+## Setup
+On Linux extra libraries might be needed:
+```
+libusb-1.0-0-dev libhidapi-dev
+```
+
 ## Build
 ```
 git submodule update --init --recursive
